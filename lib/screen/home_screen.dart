@@ -10,14 +10,28 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int totalSeconds = 1500;
+  // 시간 변수 따로 선언
+  static const twentyFiveMinutes = 1500;
+  int totalSeconds = twentyFiveMinutes;
   bool isRunning = false;
+  int totalPomodoros = 0;
   late Timer timer;
 
   void onTick(Timer timer) {
-    setState(() {
-      totalSeconds--;
-    });
+    // 시간 종료 시 logic
+    if (totalSeconds == 0) {
+      setState(() {
+        totalPomodoros++;
+        isRunning = false;
+        totalSeconds = twentyFiveMinutes;
+      });
+      timer.cancel();
+      // 시간 미종료 시 logic
+    } else {
+      setState(() {
+        totalSeconds--;
+      });
+    }
   }
 
   void onStartPressed() {
@@ -25,16 +39,35 @@ class _HomeScreenState extends State<HomeScreen> {
       const Duration(seconds: 1),
       onTick,
     );
-    // timer 시작 시 isRunnging true
     isRunning = true;
   }
 
-  // 정지 function
   void onPausePressed() {
     timer.cancel();
     setState(() {
       isRunning = false;
     });
+  }
+
+  void onStopPressed() {
+    timer.cancel();
+    setState(() {
+      isRunning = false;
+      totalSeconds = twentyFiveMinutes;
+    });
+  }
+
+  void onRefreshPressed() {
+    onStopPressed();
+    totalPomodoros = 0;
+  }
+
+  String format(int seconds) {
+    var duration = Duration(seconds: seconds);
+    // int to time format
+    // print(duration.toString().split(".")[0].replaceAll('0:', ''));
+    // print(duration.toString().split(".").first.substring(2, 7));
+    return duration.toString().split(".").first.substring(2, 7);
   }
 
   @override
@@ -48,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Container(
               alignment: Alignment.bottomCenter,
               child: Text(
-                '$totalSeconds',
+                format(totalSeconds),
                 style: TextStyle(
                     color: Theme.of(context).cardColor,
                     fontSize: 89,
@@ -58,18 +91,37 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           Flexible(
             flex: 3,
-            child: Center(
-              child: IconButton(
-                iconSize: 120,
-                color: Theme.of(context).cardColor,
-                onPressed: isRunning ? onPausePressed : onStartPressed,
-                icon: Icon(
-                  // isRunning에 따른 icon 변경
-                  isRunning
-                      ? Icons.pause_circle_outline
-                      : Icons.play_circle_outline,
-                ),
-              ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    IconButton(
+                      iconSize: 120,
+                      color: Theme.of(context).cardColor,
+                      onPressed: isRunning ? onPausePressed : onStartPressed,
+                      icon: Icon(
+                        isRunning
+                            ? Icons.pause_circle_outline
+                            : Icons.play_circle_outline,
+                      ),
+                    ),
+                    IconButton(
+                      iconSize: 120,
+                      color: Theme.of(context).cardColor,
+                      onPressed: onStopPressed,
+                      icon: const Icon(Icons.stop_circle_outlined),
+                    ),
+                    IconButton(
+                      iconSize: 120,
+                      color: Theme.of(context).cardColor,
+                      onPressed: onStopPressed,
+                      icon: const Icon(Icons.refresh_rounded),
+                    ),
+                  ],
+                )
+              ],
             ),
           ),
           Flexible(
@@ -97,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         Text(
-                          '0',
+                          '$totalPomodoros',
                           style: TextStyle(
                             fontSize: 60,
                             fontWeight: FontWeight.w600,
