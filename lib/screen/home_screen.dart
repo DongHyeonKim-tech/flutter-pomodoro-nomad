@@ -10,23 +10,27 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // 시간 변수 따로 선언
-  static const twentyFiveMinutes = 1500;
+  static const twentyFiveMinutes = 5;
+  static const takeFiveMinutes = 3;
   int totalSeconds = twentyFiveMinutes;
   bool isRunning = false;
+  bool isTakeFive = false;
   int totalPomodoros = 0;
   late Timer timer;
 
   void onTick(Timer timer) {
-    // 시간 종료 시 logic
+    print(totalSeconds);
+    print(isTakeFive);
     if (totalSeconds == 0) {
+      if (isTakeFive) {
+        setState(() {
+          totalPomodoros++;
+        });
+      }
       setState(() {
-        totalPomodoros++;
-        isRunning = false;
-        totalSeconds = twentyFiveMinutes;
+        isTakeFive = !isTakeFive;
+        totalSeconds = isTakeFive ? takeFiveMinutes : twentyFiveMinutes;
       });
-      timer.cancel();
-      // 시간 미종료 시 logic
     } else {
       setState(() {
         totalSeconds--;
@@ -53,13 +57,18 @@ class _HomeScreenState extends State<HomeScreen> {
     timer.cancel();
     setState(() {
       isRunning = false;
-      totalSeconds = twentyFiveMinutes;
+      totalSeconds = isTakeFive ? takeFiveMinutes : twentyFiveMinutes;
     });
   }
 
   void onRefreshPressed() {
-    onStopPressed();
-    totalPomodoros = 0;
+    timer.cancel();
+    setState(() {
+      totalPomodoros = 0;
+      isRunning = false;
+      isTakeFive = false;
+      totalSeconds = twentyFiveMinutes;
+    });
   }
 
   String format(int seconds) {
@@ -94,6 +103,13 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                Text(
+                  isTakeFive ? 'take break \u{1F606}' : 'run!!! \u{1F624}',
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.headlineLarge!.color,
+                    fontSize: 40,
+                  ),
+                ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
@@ -116,7 +132,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     IconButton(
                       iconSize: 120,
                       color: Theme.of(context).cardColor,
-                      onPressed: onStopPressed,
+                      onPressed: onRefreshPressed,
                       icon: const Icon(Icons.refresh_rounded),
                     ),
                   ],
